@@ -1,11 +1,6 @@
 package common
 
 const (
-	// Configuración de la aplicación
-	AppName        = "HomeDevicesApp"
-	AppVersion     = "1.0.0"
-	DefaultTimeout = 30 // segundos
-
 	ErrDeviceNotCreatedErrorCode    = "DEVICE_NO_CREATED"
 	ErrDeviceNotCreatedErrorMessage = "An error occurred creating new device"
 

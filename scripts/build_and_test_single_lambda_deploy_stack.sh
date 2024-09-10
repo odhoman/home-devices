@@ -9,8 +9,18 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+echo "Build and test for $1 succeeded. Running test on the stack..."
+# Run unit tests
+npm test
+
+# Check if tests passed (exit code of test runner)
+if [ $? -ne 0 ]; then
+  echo "Tests on stack failed. Please check the stack. Aborting process."
+  exit 1
+fi
+
 # If the build and test succeeded, proceed with CDK deploy
-echo "Build and test for $1 succeeded. Deploying stack..."
+echo "Tests on stack succeeded. Deploying stack..."
 cdk deploy
 
 # Check if the deployment was successful

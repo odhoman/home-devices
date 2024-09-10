@@ -21,7 +21,6 @@ func handleRequest(ctx context.Context, id string, deviceService hDService.HomeD
 	}
 
 	if err := deviceService.DeleteHomeDevice(ctx, id); err != nil {
-		log.Printf("handleRequest  " + err.ErrorCode)
 		return getErrorResponse(err.ErrorCode), nil
 	}
 

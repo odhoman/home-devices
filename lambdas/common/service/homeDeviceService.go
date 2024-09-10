@@ -34,17 +34,13 @@ type HomeDeviceServiceImpl struct {
 
 func (hDDI HomeDeviceServiceImpl) CreateHomeDevice(ctx context.Context, device request.CreateDeviceRequest) (*response.HomdeDeviceResponse, *hdError.HomeDeviceError) {
 
-	log.Printf("1")
-
 	tableName, error := getValuePropertyOrError(constants.TableNameHomeDevicesProperty)
 	if error != nil {
-		log.Printf("2")
 		return nil, error
 	}
 
 	macHomeIdIndexName, error := getValuePropertyOrError(constants.MacHomeIdIndexNameProperty)
 	if error != nil {
-		log.Printf("3")
 		return nil, error
 	}
 
@@ -60,7 +56,6 @@ func (hDDI HomeDeviceServiceImpl) CreateHomeDevice(ctx context.Context, device r
 
 	result, err := hDDI.DynamoDbApi.Query(ctx, input)
 	if err != nil {
-		log.Printf("4")
 		log.Printf("Error querying the GSI: %v", err)
 		return nil, &hdError.HomeDeviceError{
 			ErrorCode:    constants.ErrGettingDeviceCode,
@@ -69,7 +64,7 @@ func (hDDI HomeDeviceServiceImpl) CreateHomeDevice(ctx context.Context, device r
 	}
 
 	if len(result.Items) > 0 {
-		log.Printf("5")
+		log.Printf("Device already exist with mac %v and homeId %v - Error: %v", device.MAC, device.HomeID, err)
 		return nil, &hdError.HomeDeviceError{
 			ErrorCode:    constants.ErrDeviceAlreadyExistsCode,
 			ErrorMessage: constants.ErrDeviceAlreadyExistsMessage,
@@ -91,7 +86,6 @@ func (hDDI HomeDeviceServiceImpl) CreateHomeDevice(ctx context.Context, device r
 			"modifiedAt": &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", now)},
 		},
 	}); err != nil {
-		log.Printf("6")
 		log.Printf("Error putting item into DynamoDB: %v", err)
 		return nil, &hdError.HomeDeviceError{
 			ErrorCode:    constants.ErrDeviceNotCreatedErrorCode,
@@ -162,8 +156,6 @@ func (hDDI HomeDeviceServiceImpl) UpdateHomeDevice(ctx context.Context, device r
 
 		var conditionErr *types.ConditionalCheckFailedException
 		if errors.As(err, &conditionErr) {
-
-			log.Printf("Record with id %v does not exist, update failed", updateInput.Key["id"])
 			return &hdError.HomeDeviceError{
 				ErrorCode:    constants.ErrDeviceNotFoundCode,
 				ErrorMessage: constants.ErrDeviceNotFoundMessage,
@@ -194,11 +186,8 @@ func (hDDI HomeDeviceServiceImpl) DeleteHomeDevice(ctx context.Context, id strin
 		},
 		ConditionExpression: aws.String("attribute_exists(id)"),
 	}); err != nil {
-
-		log.Printf("DeleteItem  " + err.Error())
 		var conditionErr *types.ConditionalCheckFailedException
 		if errors.As(err, &conditionErr) {
-
 			log.Printf("Record with id %v does not exist, delete failed", id)
 			return &hdError.HomeDeviceError{
 				ErrorCode:    constants.ErrDeviceNotFoundCode,
@@ -214,7 +203,6 @@ func (hDDI HomeDeviceServiceImpl) DeleteHomeDevice(ctx context.Context, id strin
 
 	}
 
-	log.Printf("No hay error")
 	return nil
 }
 

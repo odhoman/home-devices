@@ -26,8 +26,6 @@ func handleRequest(ctx context.Context, id string, deviceService hDService.HomeD
 		return getErrorResponse(err.ErrorCode), nil
 	}
 
-	log.Printf("5")
-
 	return hDResponse.ReturnAPIGatewayProxyResponse(200, device), nil
 }
 

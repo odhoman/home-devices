@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Mock DynamoDB API
 type mockDynamoDbApi struct {
 	mock.Mock
 }

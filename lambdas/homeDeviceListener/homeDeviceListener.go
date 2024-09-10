@@ -52,8 +52,6 @@ func handleRequest(ctx context.Context, sqsEvent events.SQSEvent, deviceService 
 			log.Printf("An error occurred updating a device for id %v - homeId %v: %v", deviceId, homeId, err.ErrorMessage)
 			continue
 		}
-
-		log.Print("Invoking UpatedDevice done...")
 	}
 }
 
