@@ -1,12 +1,18 @@
 **Home Devices**
 
-This project aims to manage home devices.
+This project aims to manage home devices. Implements Lambda functions in **Golang** to:
+- Handle CRUD of home devices: create, update, delete, get
+- SQS listener Lambda function to process messages from a queue Messages
+will contain JSON payloads with information about device-home associations.
+Upon receiving a message, update the corresponding device record in
+DynamoDB with the new homeId information
+
 
 **Directory Structure**
 
 The project is divided into three main folders:
 
-- The **lambda** folder contains the Lambda functions that will be executed for CRUD operations and updates on home devices.
+- The **lambda** folder contains the Lambda functions (written in Golang) that will be executed for CRUD operations and updates on home devices.
 - The **lib** folder contains the stack with the creation and configuration of AWS services.
 - The **scripts** folder contains all the necessary files for testing, building the Lambda functions, and deploying the stack on AWS.
 
@@ -26,11 +32,11 @@ Below are the actions of the scripts present in the scripts folder:
 
 **Operations Performed by the Lambda Functions**
 
-**CreateDevice**
+***CreateDevice***
 
 This function is responsible for creating a new device in the HomeDevices table in the DynamoDB database.
 
-**Request Validations**
+****Request Validations****
 
 - **MAC (string) (json:"mac")**:
   - **Type**: String
@@ -130,7 +136,7 @@ The combination of homeID and MAC must be unique within the table. It is not pos
   }
   ```
 
-**UpdateDevice**
+***UpdateDevice***
 
 Modifies existing device information in the database.
 
@@ -227,7 +233,7 @@ At least one of the fields described above must have a value.
   }
   ```
 
-**DeleteDevice**
+***DeleteDevice***
 
 Removes a device from DynamoDB.
 
@@ -269,7 +275,7 @@ Removes a device from DynamoDB.
   }
   ```
 
-**GetDevice**
+***GetDevice***
 
 Retrieves details of a device based on a unique identifier.
 
