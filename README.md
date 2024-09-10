@@ -7,6 +7,13 @@ will contain JSON payloads with information about device-home associations.
 Upon receiving a message, update the corresponding device record in
 DynamoDB with the new homeId information
 
+Also implements the AWS infra necessary  in order to run the described above: 
+- 5 lambda functions
+- Api Gateway
+- SQS queue
+- DynamoDB
+
+Provides necessary for testing, building the Lambda functions, and deploying the stack on AWS.
 
 **Directory Structure**
 
