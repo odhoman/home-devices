@@ -30,7 +30,6 @@ func handleRequest(ctx context.Context, device hDRequest.CreateDeviceRequest, de
 	}
 
 	return hDResponse.ReturnAPIGatewayProxyResponse(201, deviceCreated), nil
-
 }
 
 func main() {

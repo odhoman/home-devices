@@ -20,7 +20,7 @@ func TestHandleRequest_Success(t *testing.T) {
 	mockService := new(hDMock.MockHomeDeviceService)
 
 	request := hDRequest.CreateDeviceRequest{
-		MAC:    "BB:WW:SS:AR:GA:UF",
+		MAC:    "00-1A-2B-3C-4D-5E",
 		Name:   "Living Room Light",
 		Type:   "light",
 		HomeID: "home12122",
@@ -52,13 +52,14 @@ func TestHandleRequest_ValidationErrorRequiredFields(t *testing.T) {
 
 	request := hDRequest.CreateDeviceRequest{
 		HomeID: "home123",
+		MAC:    "WRONG MAC ADDRESS",
 	}
 
 	response, _ := handleRequest(context.TODO(), request, new(hDMock.MockHomeDeviceService))
 
 	assert.Equal(t, 400, response.StatusCode)
 
-	assert.Contains(t, response.Body, "Validation failed for field 'MAC': required")
+	assert.Contains(t, response.Body, "Please enter a valid MAC address")
 	assert.Contains(t, response.Body, "Validation failed for field 'Type': required")
 	assert.Contains(t, response.Body, "Validation failed for field 'Name': required")
 }
@@ -85,7 +86,7 @@ func TestHandleRequest_ValidationErrorFieldsLength(t *testing.T) {
 func TestHandleRequest_AlreadyExistError(t *testing.T) {
 
 	request := hDRequest.CreateDeviceRequest{
-		MAC:    "BB:WW:SS:AR:GA:UF",
+		MAC:    "00:1B:44:11:3A:B7",
 		Name:   "Living Room Light",
 		Type:   "light",
 		HomeID: "home12122",
@@ -105,7 +106,7 @@ func TestHandleRequest_AlreadyExistError(t *testing.T) {
 func TestHandleRequest_InternalServerError(t *testing.T) {
 
 	request := hDRequest.CreateDeviceRequest{
-		MAC:    "BB:WW:SS:AR:GA:UF",
+		MAC:    "00:1B:44:11:3A:B7",
 		Name:   "Living Room Light",
 		Type:   "light",
 		HomeID: "home12122",

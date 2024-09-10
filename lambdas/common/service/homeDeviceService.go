@@ -34,13 +34,17 @@ type HomeDeviceServiceImpl struct {
 
 func (hDDI HomeDeviceServiceImpl) CreateHomeDevice(ctx context.Context, device request.CreateDeviceRequest) (*response.HomdeDeviceResponse, *hdError.HomeDeviceError) {
 
+	log.Printf("1")
+
 	tableName, error := getValuePropertyOrError(constants.TableNameHomeDevicesProperty)
 	if error != nil {
+		log.Printf("2")
 		return nil, error
 	}
 
 	macHomeIdIndexName, error := getValuePropertyOrError(constants.MacHomeIdIndexNameProperty)
 	if error != nil {
+		log.Printf("3")
 		return nil, error
 	}
 
@@ -56,6 +60,7 @@ func (hDDI HomeDeviceServiceImpl) CreateHomeDevice(ctx context.Context, device r
 
 	result, err := hDDI.DynamoDbApi.Query(ctx, input)
 	if err != nil {
+		log.Printf("4")
 		log.Printf("Error querying the GSI: %v", err)
 		return nil, &hdError.HomeDeviceError{
 			ErrorCode:    constants.ErrGettingDeviceCode,
@@ -64,6 +69,7 @@ func (hDDI HomeDeviceServiceImpl) CreateHomeDevice(ctx context.Context, device r
 	}
 
 	if len(result.Items) > 0 {
+		log.Printf("5")
 		return nil, &hdError.HomeDeviceError{
 			ErrorCode:    constants.ErrDeviceAlreadyExistsCode,
 			ErrorMessage: constants.ErrDeviceAlreadyExistsMessage,
@@ -85,6 +91,7 @@ func (hDDI HomeDeviceServiceImpl) CreateHomeDevice(ctx context.Context, device r
 			"modifiedAt": &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", now)},
 		},
 	}); err != nil {
+		log.Printf("6")
 		log.Printf("Error putting item into DynamoDB: %v", err)
 		return nil, &hdError.HomeDeviceError{
 			ErrorCode:    constants.ErrDeviceNotCreatedErrorCode,
@@ -132,29 +139,7 @@ func (hDDI HomeDeviceServiceImpl) GetHomeDevice(ctx context.Context, id string) 
 		}
 	}
 
-	device := response.HomdeDeviceResponse{}
-
-	if v, ok := result.Item["id"].(*types.AttributeValueMemberS); ok {
-		device.ID = v.Value
-	}
-	if v, ok := result.Item["mac"].(*types.AttributeValueMemberS); ok {
-		device.MAC = v.Value
-	}
-	if v, ok := result.Item["name"].(*types.AttributeValueMemberS); ok {
-		device.Name = v.Value
-	}
-	if v, ok := result.Item["type"].(*types.AttributeValueMemberS); ok {
-		device.Type = v.Value
-	}
-	if v, ok := result.Item["homeId"].(*types.AttributeValueMemberS); ok {
-		device.HomeID = v.Value
-	}
-	if v, ok := result.Item["createdAt"].(*types.AttributeValueMemberN); ok {
-		device.CreatedAt, _ = strconv.ParseInt(v.Value, 10, 64)
-	}
-	if v, ok := result.Item["modifiedAt"].(*types.AttributeValueMemberN); ok {
-		device.ModifiedAt, _ = strconv.ParseInt(v.Value, 10, 64)
-	}
+	device := mapDynamoDBItemToDeviceResponse(result.Item)
 
 	return &device, nil
 }
@@ -299,4 +284,32 @@ func getValuePropertyOrError(fieldName string) (string, *hdError.HomeDeviceError
 	}
 
 	return value, nil
+}
+
+func mapDynamoDBItemToDeviceResponse(item map[string]types.AttributeValue) response.HomdeDeviceResponse {
+	return response.HomdeDeviceResponse{
+		ID:         getStringAttribute(item, "id"),
+		MAC:        getStringAttribute(item, "mac"),
+		Name:       getStringAttribute(item, "name"),
+		Type:       getStringAttribute(item, "type"),
+		HomeID:     getStringAttribute(item, "homeId"),
+		CreatedAt:  getInt64Attribute(item, "createdAt"),
+		ModifiedAt: getInt64Attribute(item, "modifiedAt"),
+	}
+}
+
+func getStringAttribute(item map[string]types.AttributeValue, key string) string {
+	if v, ok := item[key].(*types.AttributeValueMemberS); ok {
+		return v.Value
+	}
+	return ""
+}
+
+func getInt64Attribute(item map[string]types.AttributeValue, key string) int64 {
+	if v, ok := item[key].(*types.AttributeValueMemberN); ok {
+		if value, err := strconv.ParseInt(v.Value, 10, 64); err == nil {
+			return value
+		}
+	}
+	return 0
 }

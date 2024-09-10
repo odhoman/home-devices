@@ -21,7 +21,7 @@ func TestHandleRequest_Success(t *testing.T) {
 	id := uuid.New().String()
 
 	request := hDRequest.UpdateDeviceRequest{
-		MAC:    "BB:WW:SS:AR:GA:UF",
+		MAC:    "00-1A-2B-3C-4D-5E",
 		Name:   "Living Room Light",
 		Type:   "light",
 		HomeID: "home12122",
@@ -45,7 +45,7 @@ func TestHandleRequest_Success(t *testing.T) {
 func TestHandleRequest_ValidationErrorFieldsLength(t *testing.T) {
 
 	request := hDRequest.UpdateDeviceRequest{
-		MAC:    "mac super large mac super large  mac super large mac super large mac super large mac super large mac super large ",
+		MAC:    "001A-2B-3C-4D-5E",
 		Name:   "name super large name super large name super large name super large name super large name super large name super large ",
 		Type:   "type super large type super large type super large type super large type super large type super large type super large ",
 		HomeID: "homeId super large homeId super large homeId super large homeId super large homeId super large homeId super large homeId super large ",
@@ -55,7 +55,7 @@ func TestHandleRequest_ValidationErrorFieldsLength(t *testing.T) {
 
 	assert.Equal(t, 400, response.StatusCode)
 
-	assert.Contains(t, response.Body, "MAC address must be between 12 and 17 characters")
+	assert.Contains(t, response.Body, "Please enter a valid MAC address")
 	assert.Contains(t, response.Body, "Name must be between 3 and 50 characters")
 	assert.Contains(t, response.Body, "Type must be between 3 and 20 characters")
 	assert.Contains(t, response.Body, "Home ID must be between 5 and 30 characters")
@@ -66,7 +66,7 @@ func TestHandleRequest_DeviceNotFound(t *testing.T) {
 	id := uuid.New().String()
 
 	request := hDRequest.UpdateDeviceRequest{
-		MAC:    "BB:WW:SS:AR:GA:UF",
+		MAC:    "00-1A-2B-3C-4D-5E",
 		Name:   "Living Room Light",
 		Type:   "light",
 		HomeID: "home12122",
@@ -107,7 +107,7 @@ func TestHandleRequest_InternalServerError(t *testing.T) {
 	id := uuid.New().String()
 
 	request := hDRequest.UpdateDeviceRequest{
-		MAC:    "BB:WW:SS:AR:GA:UF",
+		MAC:    "00-1A-2B-3C-4D-5E",
 		Name:   "Living Room Light",
 		Type:   "light",
 		HomeID: "home12122",

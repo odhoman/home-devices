@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	response "lambdas/common/response"
+	"regexp"
 
 	"github.com/go-playground/validator/v10"
 )
 
 func ValidateDeviceRequestStruct(s interface{}) []string {
 	validate := validator.New()
+	validate.RegisterValidation("MacACAddressPatternMatch", validateMACAddress)
 	var validationErrors []string
 	if err := validate.Struct(s); err != nil {
 
@@ -22,10 +24,13 @@ func ValidateDeviceRequestStruct(s interface{}) []string {
 }
 
 func getMessageForFieldError(tag, field string) string {
+
 	switch field {
 	case "MAC":
 		if tag == "min" || tag == "max" {
 			return "MAC address must be between 12 and 17 characters"
+		} else if tag == "MacACAddressPatternMatch" {
+			return "Please enter a valid MAC address"
 		}
 	case "Name":
 		if tag == "min" || tag == "max" {
@@ -70,4 +75,10 @@ func CheckEmptyStringAndResponseBadRequestErrors(fieldName, value string) map[st
 	}
 
 	return nil
+}
+
+func validateMACAddress(fl validator.FieldLevel) bool {
+	mac := fl.Field().String()
+	macRegex := regexp.MustCompile(`^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$`)
+	return macRegex.MatchString(mac)
 }
