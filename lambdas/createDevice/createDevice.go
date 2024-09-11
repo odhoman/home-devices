@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"log"
 
-	hDConstants "lambdas/common/constants"
 	hDRequest "lambdas/common/request"
 	hDResponse "lambdas/common/response"
 	hDService "lambdas/common/service"
 	hDValidation "lambdas/common/validation"
+
+	hDConstants "github.com/odhoman/home-devices/internal/constants"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"

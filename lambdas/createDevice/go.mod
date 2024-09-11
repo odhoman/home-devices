@@ -1,4 +1,4 @@
-module createDevice.go
+module github.com/odhoman/home-devices
 
 go 1.23.0
 
