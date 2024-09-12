@@ -89,8 +89,6 @@ func TestGetHomeDevice_Success(t *testing.T) {
 	homeDeviceServiceImpl := createHomeDeviceDaoImpl()
 	response, err := executeSaveHomeDevice(ctx, request, homeDeviceServiceImpl)
 
-	//response, err := homeDeviceServiceImpl.SaveHomeDevice(ctx, request)
-
 	if err != nil {
 		fmt.Println(err.ErrorCode)
 		return

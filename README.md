@@ -21,21 +21,24 @@ The project is divided into three main folders:
 
 - The **lambda** folder contains the Lambda functions (written in Golang) that will be executed for CRUD operations and updates on home devices.
 - The **lib** folder contains the stack with the creation and configuration of AWS services.
-- The **scripts** folder contains all the necessary files for testing, building the Lambda functions, and deploying the stack on AWS.
+- In the root folder, the **Makefile**  contains all the necessary comands for testing, building the Lambda functions, and deploying the stack on AWS.
 
-**Scripting**
+**Makefile**
 
-Below are the actions of the scripts present in the scripts folder:
+Below are the actions of Makefile:
 
-- **run_all_tests.sh**: Executes all Go unit tests recursively in all folders inside the lambdas directory.
-- **build_single_lambda.sh**: Executes all Go unit tests recursively in all folders inside the lambdas directory. Subsequently, it builds the bootstrap file to make it ready for deployment.
-- **build_createDevice.sh**: Executes the actions of `build_single_lambda.sh` for the createDevice Lambda function.
-- **build_deleteDevice.sh**: Executes the actions of `build_single_lambda.sh` for the deleteDevice Lambda function.
-- **build_getDevice.sh**: Executes the actions of `build_single_lambda.sh` for the getDevice Lambda function.
-- **build_updateDevice.sh**: Executes the actions of `build_single_lambda.sh` for the updateDevice Lambda function.
-- **build_homeDeviceListener.sh**: Executes the actions of `build_single_lambda.sh` for the homeDeviceListener Lambda function.
-- **build_all.sh**: Executes the actions of `build_single_lambda.sh` for each of the Lambda functions.
-- **build_and_test_single_lambda_deploy_stack.sh**: Executes all Go unit tests recursively in all folders inside the lambdas directory. Subsequently, it builds the bootstrap file to make it ready for deployment. Then, it deploys the stack.
+- **`test_build_and_deploy_stack_all_lambdas`**: Test, build, and deploy the entire stack for all Lambdas.
+- **`test_build_and_deploy_stack_for_single_lambda`**: Test, build, and deploy the stack for a single specified Lambda.
+- **`test_and_build_all`**: Test and build all Lambdas sequentially.
+- **`test_and_build_createDevice`**: Test and build only the `createDevice` Lambda.
+- **`test_and_build_deleteDevice`**: Test and build only the `deleteDevice` Lambda.
+- **`test_and_build_updateDevice`**: Test and build only the `updateDevice` Lambda.
+- **`test_and_build_getDevice`**: Test and build only the `getDevice` Lambda.
+- **`test_and_build_homeDeviceListener`**: Test and build only the `homeDeviceListener` Lambda.
+- **`test_and_build_single_lambda`**: Test all Lambdas and build a single specified Lambda if tests pass.
+- **`build_single_lambda`**: Build a single specified Lambda.
+- **`test_all`**: Run tests for all Lambdas in the directory.
+- **`run_tests_in_dir`**: Recursively run tests in all subdirectories.
 
 **Operations Performed by the Lambda Functions**
 

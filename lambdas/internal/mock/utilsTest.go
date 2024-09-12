@@ -64,10 +64,8 @@ func Setup(t *testing.M) (string, func(t *testing.M)) {
 		log.Fatalf("Could not get container port: %s", err)
 	}
 
-	// Crea la URL del endpoint de DynamoDB
 	endpoint = fmt.Sprintf("http://%s:%s", host, port.Port())
 
-	// Resolver de endpoint personalizado para DynamoDB Local
 	customResolver := aws.EndpointResolverWithOptionsFunc(
 		func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 			if service == dynamodb.ServiceID {

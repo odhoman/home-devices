@@ -257,15 +257,6 @@ func buidUpdateInput(device request.UpdateDeviceRequest, id string) (*dynamodb.U
 	return updateInput, nil
 }
 
-/*
-	 func NewHomeDeviceServiceImplFromConfig(cfg aws.Config) HomeDeviceDao {
-		return HomeDeviceServiceDao{DynamoDbApi: dynamodb.NewFromConfig(cfg)}
-	}
-
-	func NewHomeDeviceServiceImpl(dynamoDbApi dynamoDbApi) HomeDeviceDao {
-		return HomeDeviceServiceDao{DynamoDbApi: dynamoDbApi}
-	}
-*/
 func getValuePropertyOrError(fieldName string) (string, *hdError.HomeDeviceError) {
 	value, error := utils.GetValueProperty(fieldName)
 
