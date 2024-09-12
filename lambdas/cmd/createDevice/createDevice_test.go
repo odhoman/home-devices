@@ -38,7 +38,7 @@ func TestHandleRequest_Success(t *testing.T) {
 
 	mockService.On("CreateHomeDevice", mock.Anything, request).Return(device, nil)
 
-	response, err := handleRequest(context.TODO(), request, mockService)
+	response, err := HandleRequest(context.TODO(), request, mockService)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 201, response.StatusCode)
@@ -56,7 +56,7 @@ func TestHandleRequest_ValidationErrorRequiredFields(t *testing.T) {
 		MAC:    "WRONG MAC ADDRESS",
 	}
 
-	response, _ := handleRequest(context.TODO(), request, new(hDMock.MockHomeDeviceService))
+	response, _ := HandleRequest(context.TODO(), request, new(hDMock.MockHomeDeviceService))
 
 	assert.Equal(t, 400, response.StatusCode)
 
@@ -74,7 +74,7 @@ func TestHandleRequest_ValidationErrorFieldsLength(t *testing.T) {
 		HomeID: "homeId super large homeId super large homeId super large homeId super large homeId super large homeId super large homeId super large ",
 	}
 
-	response, _ := handleRequest(context.TODO(), request, new(hDMock.MockHomeDeviceService))
+	response, _ := HandleRequest(context.TODO(), request, new(hDMock.MockHomeDeviceService))
 
 	assert.Equal(t, 400, response.StatusCode)
 
@@ -98,7 +98,7 @@ func TestHandleRequest_AlreadyExistError(t *testing.T) {
 		ErrorCode: hDConstants.ErrDeviceAlreadyExistsCode,
 	})
 
-	response, _ := handleRequest(context.TODO(), request, mockService)
+	response, _ := HandleRequest(context.TODO(), request, mockService)
 
 	assert.Equal(t, 400, response.StatusCode)
 	assert.Contains(t, response.Body, "Device Already Exist")
@@ -118,7 +118,7 @@ func TestHandleRequest_InternalServerError(t *testing.T) {
 		ErrorCode: hDConstants.ErrDeviceNotCreatedErrorCode,
 	})
 
-	response, _ := handleRequest(context.TODO(), request, mockService)
+	response, _ := HandleRequest(context.TODO(), request, mockService)
 
 	assert.Equal(t, 500, response.StatusCode)
 	assert.Contains(t, response.Body, "Internal Server error creating a new device")

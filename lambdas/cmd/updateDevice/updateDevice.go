@@ -18,7 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
-func handleRequest(ctx context.Context, device hDRequest.UpdateDeviceRequest, id string, deviceService hDService.HomeDeviceService) (events.APIGatewayProxyResponse, error) {
+func HandleRequest(ctx context.Context, device hDRequest.UpdateDeviceRequest, id string, deviceService hDService.HomeDeviceService) (events.APIGatewayProxyResponse, error) {
 
 	if valdationOutput := hDValidation.ValidateDeviceRequestStruct(device); len(valdationOutput) > 0 {
 		return hDResponse.ReturnBadRequestErrorAPIGatewayProxyResponse(valdationOutput), nil
@@ -57,6 +57,6 @@ func main() {
 			return hDResponse.BadRequestErrorAPIGatewayProxyResponseSingleMessage(fmt.Sprintf("Invalid request body: %v", err)), nil
 		}
 
-		return handleRequest(ctx, updateDeviceRequest, request.PathParameters["id"], hDService.NewHomeDeviceServiceImpl(cfg))
+		return HandleRequest(ctx, updateDeviceRequest, request.PathParameters["id"], hDService.NewHomeDeviceServiceImplFromConfig2(cfg))
 	})
 }

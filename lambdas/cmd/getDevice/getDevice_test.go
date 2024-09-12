@@ -34,7 +34,7 @@ func TestHandleRequest_Success(t *testing.T) {
 
 	mockService.On("GetHomeDevice", mock.Anything, id).Return(device, nil)
 
-	response, err := handleRequest(context.TODO(), id, mockService)
+	response, err := HandleRequest(context.TODO(), id, mockService)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 200, response.StatusCode)
@@ -47,7 +47,7 @@ func TestHandleRequest_Success(t *testing.T) {
 
 func TestHandleRequest_ValidationError(t *testing.T) {
 
-	response, _ := handleRequest(context.TODO(), "", new(hDMock.MockHomeDeviceService))
+	response, _ := HandleRequest(context.TODO(), "", new(hDMock.MockHomeDeviceService))
 
 	assert.Equal(t, 400, response.StatusCode)
 
@@ -64,7 +64,7 @@ func TestHandleRequest_DeviceNotFound(t *testing.T) {
 		ErrorCode: hDConstants.ErrDeviceNotFoundCode,
 	})
 
-	response, _ := handleRequest(context.TODO(), id, mockService)
+	response, _ := HandleRequest(context.TODO(), id, mockService)
 
 	assert.Equal(t, 404, response.StatusCode)
 	assert.Contains(t, response.Body, "Device Not Found")
@@ -79,7 +79,7 @@ func TestHandleRequest_InternalServerError(t *testing.T) {
 		ErrorCode: hDConstants.ErrGettingDeviceMessage,
 	})
 
-	response, _ := handleRequest(context.TODO(), id, mockService)
+	response, _ := HandleRequest(context.TODO(), id, mockService)
 
 	log.Printf(response.Body)
 	assert.Equal(t, 500, response.StatusCode)

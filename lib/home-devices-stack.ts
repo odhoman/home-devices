@@ -61,7 +61,7 @@ export class HomeDevicesStack extends cdk.Stack {
 
   private createHomeDeviceListenerLambda(scope: Construct, homeDevicesQueue: cdk.aws_sqs.Queue, homeDevicesTable: cdk.aws_dynamodb.Table, macHomeIdIndexName: string): lambda.Function {
    
-    var homeDeviceListenerLambda = LambdaHelper.createLambda(scope, 'HomeDeviceListener', 'bootstrap', 'lambdas/homeDeviceListener', {
+    var homeDeviceListenerLambda = LambdaHelper.createLambda(scope, 'HomeDeviceListener', 'bootstrap', 'lambdas/cmd/homeDeviceListener', {
       SQS_QUEUE_URL: homeDevicesQueue.queueUrl,
       HOME_DEVICE_TABLE_NAME: homeDevicesTable.tableName      
     });
@@ -76,7 +76,7 @@ export class HomeDevicesStack extends cdk.Stack {
   }
 
   private createCreateDeviceLambda(homeDevicesTable: cdk.aws_dynamodb.Table, macHomeIdIndexName: string): cdk.aws_lambda.Function {
-    var createDeviceLambda = LambdaHelper.createLambda(this, 'CreateDevice', 'bootstrap', 'lambdas/createDevice', {
+    var createDeviceLambda = LambdaHelper.createLambda(this, 'CreateDevice', 'bootstrap', 'lambdas/cmd/createDevice', {
       HOME_DEVICE_TABLE_NAME: homeDevicesTable.tableName,
       MAC_HOMEID_INDEX_NAME: macHomeIdIndexName
     });
@@ -95,7 +95,7 @@ export class HomeDevicesStack extends cdk.Stack {
   }
 
   private createGetDeviceLambda(homeDevicesTable: cdk.aws_dynamodb.Table): cdk.aws_lambda.Function {
-    var getDeviceLambda = LambdaHelper.createLambda(this, 'GetDevice', 'bootstrap', 'lambdas/getDevice', {
+    var getDeviceLambda = LambdaHelper.createLambda(this, 'GetDevice', 'bootstrap', 'lambdas/cmd/getDevice', {
       HOME_DEVICE_TABLE_NAME: homeDevicesTable.tableName,
     });
 
@@ -106,7 +106,7 @@ export class HomeDevicesStack extends cdk.Stack {
   }
 
   private createUpdateDeviceLambda(homeDevicesTable: cdk.aws_dynamodb.Table): cdk.aws_lambda.Function {
-    var updateDeviceLambda = LambdaHelper.createLambda(this, 'UpdateDevice', 'bootstrap', 'lambdas/updateDevice', {
+    var updateDeviceLambda = LambdaHelper.createLambda(this, 'UpdateDevice', 'bootstrap', 'lambdas/cmd/updateDevice', {
       HOME_DEVICE_TABLE_NAME: homeDevicesTable.tableName,
     });
 
@@ -117,7 +117,7 @@ export class HomeDevicesStack extends cdk.Stack {
 
 
   private createDeleteDeviceLambda(homeDevicesTable: cdk.aws_dynamodb.Table): cdk.aws_lambda.Function {
-    var deleteDeviceLambda = LambdaHelper.createLambda(this, 'DeleteDevice', 'bootstrap', 'lambdas/deleteDevice', {
+    var deleteDeviceLambda = LambdaHelper.createLambda(this, 'DeleteDevice', 'bootstrap', 'lambdas/cmd/deleteDevice', {
       HOME_DEVICE_TABLE_NAME: homeDevicesTable.tableName,
     });
 

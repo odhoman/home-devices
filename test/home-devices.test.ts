@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template, Match } from 'aws-cdk-lib/assertions';
 import { HomeDevicesStack } from '../lib/home-devices-stack';
+import { BillingMode } from 'aws-cdk-lib/aws-dynamodb';
 
 test('DynamoDB Table Created', () => {
     const app = new cdk.App();
@@ -12,10 +13,7 @@ test('DynamoDB Table Created', () => {
             AttributeName: 'id',
             KeyType: 'HASH'
         }]),
-        ProvisionedThroughput: {
-            ReadCapacityUnits: 5,
-            WriteCapacityUnits: 5
-        },
+        BillingMode: 'PAY_PER_REQUEST',
         GlobalSecondaryIndexes: Match.arrayWith([
             Match.objectLike({
                 IndexName: 'MacHomeIdIndex',

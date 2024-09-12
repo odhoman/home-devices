@@ -32,7 +32,7 @@ func TestHandleRequest_Success(t *testing.T) {
 
 	mockService.On("UpdateHomeDevice", mock.Anything, request, id).Return(nil)
 
-	response, err := handleRequest(context.TODO(), request, id, mockService)
+	response, err := HandleRequest(context.TODO(), request, id, mockService)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 201, response.StatusCode)
@@ -52,7 +52,7 @@ func TestHandleRequest_ValidationErrorFieldsLength(t *testing.T) {
 		HomeID: "homeId super large homeId super large homeId super large homeId super large homeId super large homeId super large homeId super large ",
 	}
 
-	response, _ := handleRequest(context.TODO(), request, uuid.New().String(), new(hDMock.MockHomeDeviceService))
+	response, _ := HandleRequest(context.TODO(), request, uuid.New().String(), new(hDMock.MockHomeDeviceService))
 
 	assert.Equal(t, 400, response.StatusCode)
 
@@ -79,7 +79,7 @@ func TestHandleRequest_DeviceNotFound(t *testing.T) {
 		ErrorCode: hDConstants.ErrDeviceNotFoundCode,
 	})
 
-	response, _ := handleRequest(context.TODO(), request, id, mockService)
+	response, _ := HandleRequest(context.TODO(), request, id, mockService)
 
 	assert.Equal(t, 404, response.StatusCode)
 	assert.Contains(t, response.Body, "Device Not Found")
@@ -97,7 +97,7 @@ func TestHandleRequest_NoFiledToUpdate(t *testing.T) {
 		ErrorCode: hDConstants.ErrNoFieldToUpdateCode,
 	})
 
-	response, _ := handleRequest(context.TODO(), request, id, mockService)
+	response, _ := HandleRequest(context.TODO(), request, id, mockService)
 
 	assert.Equal(t, 400, response.StatusCode)
 	assert.Contains(t, response.Body, "Please enter a value property to update")
@@ -120,7 +120,7 @@ func TestHandleRequest_InternalServerError(t *testing.T) {
 		ErrorCode: hDConstants.ErrUpdatingDeviceCode,
 	})
 
-	response, _ := handleRequest(context.TODO(), request, id, mockService)
+	response, _ := HandleRequest(context.TODO(), request, id, mockService)
 
 	assert.Equal(t, 500, response.StatusCode)
 	assert.Contains(t, response.Body, "Internal Server error updating a device")

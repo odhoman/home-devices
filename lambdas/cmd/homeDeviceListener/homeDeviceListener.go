@@ -28,7 +28,7 @@ type Device struct {
 	CreatedAt int64  `json:"createdAt"`
 }
 
-func handleRequest(ctx context.Context, sqsEvent events.SQSEvent, deviceService hDService.HomeDeviceService) {
+func HandleRequest(ctx context.Context, sqsEvent events.SQSEvent, deviceService hDService.HomeDeviceService) {
 
 	for _, message := range sqsEvent.Records {
 
@@ -67,6 +67,6 @@ func main() {
 			log.Fatalf("unable to load SDK config for homeDeviceListener lambda function, %v", err)
 		}
 
-		handleRequest(ctx, sqsEvent, hDService.NewHomeDeviceServiceImpl(cfg))
+		HandleRequest(ctx, sqsEvent, hDService.NewHomeDeviceServiceImplFromConfig2(cfg))
 	})
 }

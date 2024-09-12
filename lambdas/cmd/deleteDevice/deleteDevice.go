@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
-func handleRequest(ctx context.Context, id string, deviceService hDService.HomeDeviceService) (events.APIGatewayProxyResponse, error) {
+func HandleRequest(ctx context.Context, id string, deviceService hDService.HomeDeviceService) (events.APIGatewayProxyResponse, error) {
 
 	if err := hDValidation.CheckEmptyString("id", id); err != nil {
 		return hDResponse.BadRequestErrorAPIGatewayProxyResponseSingleMessage(err.Error()), nil
@@ -45,6 +45,6 @@ func main() {
 			log.Fatalf("unable to load SDK config for deleteDevice lambda function, %v", err)
 		}
 
-		return handleRequest(ctx, request.PathParameters["id"], hDService.NewHomeDeviceServiceImpl(cfg))
+		return HandleRequest(ctx, request.PathParameters["id"], hDService.NewHomeDeviceServiceImplFromConfig2(cfg))
 	})
 }

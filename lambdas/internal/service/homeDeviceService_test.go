@@ -2,346 +2,181 @@ package service
 
 import (
 	"context"
-	"errors"
-	"os"
 	"testing"
 
-	constants "github.com/odhoman/home-devices/internal/constants"
-	request "github.com/odhoman/home-devices/internal/request"
-
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/odhoman/home-devices/internal/constants"
+	hdError "github.com/odhoman/home-devices/internal/error"
+	hdMock "github.com/odhoman/home-devices/internal/mock"
+	"github.com/odhoman/home-devices/internal/request"
+	hdREsponse "github.com/odhoman/home-devices/internal/response"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	mock "github.com/stretchr/testify/mock"
 )
 
-type mockDynamoDbApi struct {
-	mock.Mock
+// Mock del DAO
+
+func TestCreateHomeDevice_DeviceExist(t *testing.T) {
+	mockDao := new(hdMock.MockHomeDeviceDao)
+	service := HomeDeviceServiceImpl{homeDeviceDao: mockDao}
+
+	ctx := context.Background()
+	deviceRequest := request.CreateDeviceRequest{MAC: "00:11:22:33:44:55", HomeID: "home1"}
+
+	// Caso 1: El dispositivo ya existe
+	mockDao.On("IsDeviceExist", ctx, deviceRequest.MAC, deviceRequest.HomeID).Return(true, (*hdError.HomeDeviceError)(nil))
+
+	_, err := service.CreateHomeDevice(ctx, deviceRequest)
+	assert.NotNil(t, err)
+	assert.Equal(t, constants.ErrDeviceAlreadyExistsCode, err.ErrorCode)
 }
 
-func (m *mockDynamoDbApi) Query(ctx context.Context, input *dynamodb.QueryInput, optFns ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error) {
-	args := m.Called(ctx, input)
-	return args.Get(0).(*dynamodb.QueryOutput), args.Error(1)
-}
+func TestCreateHomeDevice_ErrorVerifyingIfDeviceExist(t *testing.T) {
+	mockDao := new(hdMock.MockHomeDeviceDao)
+	service := HomeDeviceServiceImpl{homeDeviceDao: mockDao}
 
-func (m *mockDynamoDbApi) PutItem(ctx context.Context, input *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error) {
-	args := m.Called(ctx, input)
-	return args.Get(0).(*dynamodb.PutItemOutput), args.Error(1)
-}
+	ctx := context.Background()
+	deviceRequest := request.CreateDeviceRequest{MAC: "00:11:22:33:44:55", HomeID: "home1"}
 
-func (m *mockDynamoDbApi) GetItem(ctx context.Context, input *dynamodb.GetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error) {
-	args := m.Called(ctx, input)
-	return args.Get(0).(*dynamodb.GetItemOutput), args.Error(1)
-}
+	// Caso 1: El dispositivo ya existe
+	mockDao.On("IsDeviceExist", ctx, deviceRequest.MAC, deviceRequest.HomeID).Return(false, &hdError.HomeDeviceError{ErrorCode: constants.ErrDeviceAlreadyExistsCode})
 
-func (m *mockDynamoDbApi) UpdateItem(ctx context.Context, input *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error) {
-	args := m.Called(ctx, input)
-	return args.Get(0).(*dynamodb.UpdateItemOutput), args.Error(1)
-}
-func (m *mockDynamoDbApi) DeleteItem(ctx context.Context, input *dynamodb.DeleteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.DeleteItemOutput, error) {
-	args := m.Called(ctx, input)
-	return args.Get(0).(*dynamodb.DeleteItemOutput), args.Error(1)
+	_, err := service.CreateHomeDevice(ctx, deviceRequest)
+	assert.NotNil(t, err)
+	assert.Equal(t, constants.ErrDeviceAlreadyExistsCode, err.ErrorCode)
 }
 
 func TestCreateHomeDevice_Success(t *testing.T) {
-	mockEnvVars()
-	mockDynamo := new(mockDynamoDbApi)
+	mockDao := new(hdMock.MockHomeDeviceDao)
+	service := HomeDeviceServiceImpl{homeDeviceDao: mockDao}
 
-	mockDynamo.On("Query", mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{
-		Items: []map[string]types.AttributeValue{}, // Empty result implying no duplicate
-	}, nil)
+	ctx := context.Background()
+	deviceRequest := request.CreateDeviceRequest{MAC: "00:11:22:33:44:55", HomeID: "home1"}
 
-	mockDynamo.On("PutItem", mock.Anything, mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
+	// Caso 1: El dispositivo no existe
+	mockDao.On("IsDeviceExist", ctx, deviceRequest.MAC, deviceRequest.HomeID).Return(false, (*hdError.HomeDeviceError)(nil))
+	// Asegurarse de que el segundo retorno es nil pero del tipo correcto
+	mockDao.On("SaveHomeDevice", ctx, deviceRequest).Return(&hdREsponse.HomdeDeviceResponse{}, (*hdError.HomeDeviceError)(nil))
 
-	service := HomeDeviceServiceImpl{
-		DynamoDbApi: mockDynamo,
-	}
-
-	device := request.CreateDeviceRequest{
-		MAC:    "00:1B:44:11:3A:B7",
-		Name:   "Living Room Light",
-		Type:   "light",
-		HomeID: "home123",
-	}
-
-	result, err := service.CreateHomeDevice(context.Background(), device)
-
+	resp, err := service.CreateHomeDevice(ctx, deviceRequest)
 	assert.Nil(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, "00:1B:44:11:3A:B7", result.MAC)
-
-	mockDynamo.AssertExpectations(t)
+	assert.NotNil(t, resp)
 }
 
-func TestCreateHomeDevice_DeviceAlreadyExists(t *testing.T) {
-	mockEnvVars()
-	mockDynamo := new(mockDynamoDbApi)
+func TestCreateHomeDevice_ErrorSavingDevice(t *testing.T) {
+	mockDao := new(hdMock.MockHomeDeviceDao)
+	service := HomeDeviceServiceImpl{homeDeviceDao: mockDao}
 
-	mockDynamo.On("Query", mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{
-		Items: []map[string]types.AttributeValue{
-			{
-				"id": &types.AttributeValueMemberS{Value: "existing-device-id"},
-			},
-		},
-	}, nil)
+	ctx := context.Background()
+	deviceRequest := request.CreateDeviceRequest{MAC: "00:11:22:33:44:55", HomeID: "home1"}
 
-	service := HomeDeviceServiceImpl{
-		DynamoDbApi: mockDynamo,
-	}
+	// Caso 1: El dispositivo no existe
+	mockDao.On("IsDeviceExist", ctx, deviceRequest.MAC, deviceRequest.HomeID).Return(false, (*hdError.HomeDeviceError)(nil))
+	mockDao.On("SaveHomeDevice", ctx, deviceRequest).Return(&hdREsponse.HomdeDeviceResponse{}, &hdError.HomeDeviceError{ErrorCode: "save_error"})
 
-	device := request.CreateDeviceRequest{
-		MAC:    "00:1B:44:11:3A:B7",
-		Name:   "Living Room Light",
-		Type:   "light",
-		HomeID: "home123",
-	}
-
-	result, err := service.CreateHomeDevice(context.Background(), device)
-
-	assert.Nil(t, result)
+	_, err := service.CreateHomeDevice(ctx, deviceRequest)
 	assert.NotNil(t, err)
-	assert.Equal(t, constants.ErrDeviceAlreadyExistsCode, err.ErrorCode)
-
-	mockDynamo.AssertExpectations(t)
-}
-
-func TestCreateHomeDevice_QueryError(t *testing.T) {
-	mockEnvVars()
-	mockDynamo := new(mockDynamoDbApi)
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-
-	mockDynamo.On("Query", mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{}, errors.New("Query failed"))
-
-	device := request.CreateDeviceRequest{
-		MAC:    "00:11:22:33:44:55",
-		Name:   "Test Device",
-		Type:   "Light",
-		HomeID: "home1",
-	}
-
-	resp, err := service.CreateHomeDevice(context.TODO(), device)
-
-	assert.Nil(t, resp)
-	assert.NotNil(t, err)
-	assert.Equal(t, constants.ErrGettingDeviceCode, err.ErrorCode)
-}
-
-func TestCreateHomeDevice_PutItemError(t *testing.T) {
-	mockEnvVars()
-	mockDynamo := new(mockDynamoDbApi)
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-
-	mockDynamo.On("Query", mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{
-		Items: []map[string]types.AttributeValue{}, // Empty result implying no duplicate
-	}, nil)
-
-	mockDynamo.On("PutItem", mock.Anything, mock.Anything).Return(&dynamodb.PutItemOutput{}, errors.New("PutItem failed"))
-
-	device := request.CreateDeviceRequest{
-		MAC:    "00:11:22:33:44:55",
-		Name:   "Test Device",
-		Type:   "Light",
-		HomeID: "home1",
-	}
-
-	resp, err := service.CreateHomeDevice(context.TODO(), device)
-
-	assert.Nil(t, resp)
-	assert.NotNil(t, err)
-	assert.Equal(t, constants.ErrDeviceNotCreatedErrorCode, err.ErrorCode)
-}
-
-func TestGetHomeDevice_Success(t *testing.T) {
-	mockEnvVars()
-
-	mockDynamo := new(mockDynamoDbApi)
-	mockDynamo.On("GetItem", mock.Anything, mock.Anything).Return(&dynamodb.GetItemOutput{
-		Item: map[string]types.AttributeValue{
-			"id":         &types.AttributeValueMemberS{Value: "device-id"},
-			"mac":        &types.AttributeValueMemberS{Value: "AA:BB:CC:DD:EE:FF"},
-			"name":       &types.AttributeValueMemberS{Value: "Test Device"},
-			"type":       &types.AttributeValueMemberS{Value: "light"},
-			"homeId":     &types.AttributeValueMemberS{Value: "home123"},
-			"createdAt":  &types.AttributeValueMemberN{Value: "1626288721"},
-			"modifiedAt": &types.AttributeValueMemberN{Value: "1626288721"},
-		},
-	}, nil)
-
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-	ctx := context.TODO()
-
-	device, err := service.GetHomeDevice(ctx, "device-id")
-	assert.NotNil(t, device)
-	assert.Nil(t, err)
-	assert.Equal(t, "device-id", device.ID)
-	assert.Equal(t, "AA:BB:CC:DD:EE:FF", device.MAC)
-	assert.Equal(t, "Test Device", device.Name)
-	assert.Equal(t, "light", device.Type)
-	assert.Equal(t, "home123", device.HomeID)
-	assert.Equal(t, int64(1626288721), device.CreatedAt)
-	assert.Equal(t, int64(1626288721), device.ModifiedAt)
-}
-
-func TestGetHomeDevice_ErrorGettingItem(t *testing.T) {
-	mockEnvVars()
-
-	mockDynamo := new(mockDynamoDbApi)
-	mockDynamo.On("GetItem", mock.Anything, mock.Anything).Return(&dynamodb.GetItemOutput{}, errors.New("error getting item"))
-
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-	ctx := context.TODO()
-
-	device, err := service.GetHomeDevice(ctx, "device-id")
-	assert.Nil(t, device)
-	assert.NotNil(t, err)
-	assert.Equal(t, constants.ErrGettingDeviceCode, err.ErrorCode)
-	assert.Equal(t, constants.ErrDeviceNotCreatedErrorMessage, err.ErrorMessage)
-}
-
-func TestGetHomeDevice_ItemNotFound(t *testing.T) {
-	mockEnvVars()
-
-	mockDynamo := new(mockDynamoDbApi)
-	mockDynamo.On("GetItem", mock.Anything, mock.Anything).Return(&dynamodb.GetItemOutput{Item: nil}, nil)
-
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-	ctx := context.TODO()
-
-	device, err := service.GetHomeDevice(ctx, "device-id")
-	assert.Nil(t, device)
-	assert.NotNil(t, err)
-	assert.Equal(t, constants.ErrDeviceNotFoundCode, err.ErrorCode)
-	assert.Equal(t, constants.ErrDeviceNotFoundMessage, err.ErrorMessage)
+	assert.Equal(t, "save_error", err.ErrorCode)
 }
 
 func TestUpdateHomeDevice_Success(t *testing.T) {
-	mockEnvVars()
+	mockDao := new(hdMock.MockHomeDeviceDao)
+	service := HomeDeviceServiceImpl{homeDeviceDao: mockDao}
 
-	mockDynamo := new(mockDynamoDbApi)
-	mockDynamo.On("UpdateItem", mock.Anything, mock.Anything).Return(&dynamodb.UpdateItemOutput{}, nil)
+	ctx := context.Background()
+	deviceRequest := request.UpdateDeviceRequest{MAC: "00:11:22:33:44:55", HomeID: "home1"}
 
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-	ctx := context.TODO()
+	mockDao.On("UpdateHomeDevice", ctx, deviceRequest, "id").Return((*hdError.HomeDeviceError)(nil))
 
-	err := service.UpdateHomeDevice(ctx, request.UpdateDeviceRequest{MAC: "AA:BB:CC:DD:EE:FF"}, "device-id")
+	err := service.UpdateHomeDevice(ctx, deviceRequest, "id")
 	assert.Nil(t, err)
 }
 
-func TestUpdateHomeDevice_ErrorUpdatingItem(t *testing.T) {
-	mockEnvVars()
+func TestUpdateHomeDevice_NoFieldToUpdate(t *testing.T) {
+	mockDao := new(hdMock.MockHomeDeviceDao)
+	service := HomeDeviceServiceImpl{homeDeviceDao: mockDao}
 
-	mockDynamo := new(mockDynamoDbApi)
-	mockDynamo.On("UpdateItem", mock.Anything, mock.Anything).Return(&dynamodb.UpdateItemOutput{}, errors.New("error updating item"))
+	ctx := context.Background()
+	deviceRequest := request.UpdateDeviceRequest{}
 
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-	ctx := context.TODO()
-
-	err := service.UpdateHomeDevice(ctx, request.UpdateDeviceRequest{MAC: "AA:BB:CC:DD:EE:FF"}, "device-id")
-	assert.NotNil(t, err)
-	assert.Equal(t, constants.ErrUpdatingDeviceCode, err.ErrorCode)
-	assert.Equal(t, constants.ErrUpdatingDeviceMessage, err.ErrorMessage)
-}
-
-func TestUpdateHomeDevice_RecordNotFound(t *testing.T) {
-	mockEnvVars()
-
-	mockDynamo := new(mockDynamoDbApi)
-	mockDynamo.On("UpdateItem", mock.Anything, mock.Anything).Return(&dynamodb.UpdateItemOutput{}, &types.ConditionalCheckFailedException{})
-
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-	ctx := context.TODO()
-
-	err := service.UpdateHomeDevice(ctx, request.UpdateDeviceRequest{MAC: "AA:BB:CC:DD:EE:FF"}, "device-id")
-	assert.NotNil(t, err)
-	assert.Equal(t, constants.ErrDeviceNotFoundCode, err.ErrorCode)
-	assert.Equal(t, constants.ErrDeviceNotFoundMessage, err.ErrorMessage)
-}
-
-func TestUpdateHomeDevice_ErrorBuildingUpdateInput(t *testing.T) {
-	clearEnvVars()
-	mockDynamo := new(mockDynamoDbApi)
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-	ctx := context.TODO()
-
-	err := service.UpdateHomeDevice(ctx, request.UpdateDeviceRequest{MAC: "AA:BB:CC:DD:EE:FF"}, "device-id")
-	assert.NotNil(t, err)
-	assert.Equal(t, constants.ErrGettingConfigCode, err.ErrorCode)
-	assert.Equal(t, constants.ErrGettingConfigMessage, err.ErrorMessage)
-}
-
-func TestUpdateHomeDevice_NoFieldsToUpdate(t *testing.T) {
-	mockEnvVars()
-	mockDynamo := new(mockDynamoDbApi)
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-	ctx := context.TODO()
-
-	err := service.UpdateHomeDevice(ctx, request.UpdateDeviceRequest{}, "device-id")
+	err := service.UpdateHomeDevice(ctx, deviceRequest, "id")
 	assert.NotNil(t, err)
 	assert.Equal(t, constants.ErrNoFieldToUpdateCode, err.ErrorCode)
-	assert.Equal(t, constants.ErrNoFieldToUpdateMessage, err.ErrorMessage)
+}
+
+func TestUpdateHomeDevice_Error(t *testing.T) {
+	mockDao := new(hdMock.MockHomeDeviceDao)
+	service := HomeDeviceServiceImpl{homeDeviceDao: mockDao}
+
+	ctx := context.Background()
+	deviceRequest := request.UpdateDeviceRequest{MAC: "00:11:22:33:44:55", HomeID: "home1"}
+
+	mockDao.On("UpdateHomeDevice", ctx, deviceRequest, "id").Return(&hdError.HomeDeviceError{ErrorCode: "save_error"})
+
+	err := service.UpdateHomeDevice(ctx, deviceRequest, "id")
+	assert.NotNil(t, err)
+	assert.Equal(t, "save_error", err.ErrorCode)
+}
+
+func TestGetHomeDevice_Success(t *testing.T) {
+	mockDao := new(hdMock.MockHomeDeviceDao)
+	service := HomeDeviceServiceImpl{homeDeviceDao: mockDao}
+
+	ctx := context.Background()
+	//deviceRequest := request.UpdateDeviceRequest{MAC: "00:11:22:33:44:55", HomeID: "home1"}
+
+	mockDao.On("GetHomeDevice", ctx, "id").Return(&hdREsponse.HomdeDeviceResponse{MAC: "00:11:22:33:44:55", HomeID: "home1"}, (*hdError.HomeDeviceError)(nil))
+
+	response, err := service.GetHomeDevice(ctx, "id")
+
+	assert.Nil(t, err)
+	assert.Equal(t, "00:11:22:33:44:55", response.MAC)
+
+}
+
+func TestGetHomeDevice_Error(t *testing.T) {
+	mockDao := new(hdMock.MockHomeDeviceDao)
+	service := HomeDeviceServiceImpl{homeDeviceDao: mockDao}
+
+	ctx := context.Background()
+
+	mockDao.On("GetHomeDevice", ctx, mock.Anything).Return(nil, &hdError.HomeDeviceError{ErrorCode: "get_error"})
+
+	_, err := service.GetHomeDevice(ctx, "id")
+
+	// Verificamos que se produjo un error
+	assert.NotNil(t, err)
+	// Comprobamos que el código de error es el esperado
+	assert.Equal(t, "get_error", err.ErrorCode)
 }
 
 func TestDeleteHomeDevice_Success(t *testing.T) {
-	mockEnvVars()
+	mockDao := new(hdMock.MockHomeDeviceDao)
+	service := HomeDeviceServiceImpl{homeDeviceDao: mockDao}
 
-	mockDynamo := new(mockDynamoDbApi)
-	mockDynamo.On("DeleteItem", mock.Anything, mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
+	ctx := context.Background()
+	//deviceRequest := request.UpdateDeviceRequest{MAC: "00:11:22:33:44:55", HomeID: "home1"}
 
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-	ctx := context.TODO()
+	mockDao.On("DeleteHomeDevice", ctx, "id").Return((*hdError.HomeDeviceError)(nil))
 
-	err := service.DeleteHomeDevice(ctx, "device-id")
+	err := service.DeleteHomeDevice(ctx, "id")
+
 	assert.Nil(t, err)
+	//assert.Equal(t, "00:11:22:33:44:55", response.MAC)
+
 }
 
-func TestDeleteHomeDevice_RecordNotFound(t *testing.T) {
-	mockEnvVars()
+func TestDeleteHomeDevice_Error(t *testing.T) {
+	mockDao := new(hdMock.MockHomeDeviceDao)
+	service := HomeDeviceServiceImpl{homeDeviceDao: mockDao}
 
-	mockDynamo := new(mockDynamoDbApi)
-	mockDynamo.On("DeleteItem", mock.Anything, mock.Anything).Return(&dynamodb.DeleteItemOutput{}, &types.ConditionalCheckFailedException{})
+	ctx := context.Background()
 
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-	ctx := context.TODO()
+	mockDao.On("DeleteHomeDevice", ctx, mock.Anything).Return(&hdError.HomeDeviceError{ErrorCode: "delete_error"})
 
-	err := service.DeleteHomeDevice(ctx, "device-id")
+	err := service.DeleteHomeDevice(ctx, "id")
+
+	// Verificamos que se produjo un error
 	assert.NotNil(t, err)
-	assert.Equal(t, constants.ErrDeviceNotFoundCode, err.ErrorCode)
-	assert.Equal(t, constants.ErrDeviceNotFoundMessage, err.ErrorMessage)
-}
-
-func TestDeleteHomeDevice_ErrorDeletingItem(t *testing.T) {
-	mockEnvVars()
-
-	mockDynamo := new(mockDynamoDbApi)
-	mockDynamo.On("DeleteItem", mock.Anything, mock.Anything).Return(&dynamodb.DeleteItemOutput{}, errors.New("error deleting item"))
-
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-	ctx := context.TODO()
-
-	err := service.DeleteHomeDevice(ctx, "device-id")
-	assert.NotNil(t, err)
-	assert.Equal(t, constants.ErrDeletingDeviceCode, err.ErrorCode)
-	assert.Equal(t, constants.ErrDeletingDeviceMessage, err.ErrorMessage)
-}
-
-func TestDeleteHomeDevice_ErrorGettingTableName(t *testing.T) {
-	clearEnvVars()
-	mockDynamo := new(mockDynamoDbApi)
-	service := HomeDeviceServiceImpl{DynamoDbApi: mockDynamo}
-	ctx := context.TODO()
-
-	err := service.DeleteHomeDevice(ctx, "device-id")
-	assert.NotNil(t, err)
-	assert.Equal(t, constants.ErrGettingConfigCode, err.ErrorCode)
-	assert.Equal(t, constants.ErrGettingConfigMessage, err.ErrorMessage)
-}
-
-func mockEnvVars() {
-	os.Setenv(constants.TableNameHomeDevicesProperty, "table")
-	os.Setenv(constants.MacHomeIdIndexNameProperty, "index")
-}
-
-func clearEnvVars() {
-	os.Setenv(constants.TableNameHomeDevicesProperty, "")
-	os.Setenv(constants.MacHomeIdIndexNameProperty, "")
+	// Comprobamos que el código de error es el esperado
+	assert.Equal(t, "delete_error", err.ErrorCode)
 }

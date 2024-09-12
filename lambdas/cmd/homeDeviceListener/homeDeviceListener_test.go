@@ -26,7 +26,7 @@ func TestHandleRequest_Success(t *testing.T) {
 		},
 	}
 
-	handleRequest(context.TODO(), sqsEvent, mockService)
+	HandleRequest(context.TODO(), sqsEvent, mockService)
 
 	mockService.AssertCalled(t, "UpdateHomeDevice", mock.Anything, hDRequest.UpdateDeviceRequest{HomeID: "home12345"}, "device123")
 }
@@ -42,7 +42,7 @@ func TestHandleRequest_UnmarshalError(t *testing.T) {
 		},
 	}
 
-	handleRequest(context.TODO(), sqsEvent, mockService)
+	HandleRequest(context.TODO(), sqsEvent, mockService)
 
 	mockService.AssertNotCalled(t, "UpdateHomeDevice")
 }
@@ -58,7 +58,7 @@ func TestHandleRequest_ValidationError(t *testing.T) {
 		},
 	}
 
-	handleRequest(context.TODO(), sqsEvent, mockService)
+	HandleRequest(context.TODO(), sqsEvent, mockService)
 
 	mockService.AssertNotCalled(t, "UpdateHomeDevice")
 }
@@ -81,7 +81,7 @@ func TestHandleRequest_UpdateDeviceError(t *testing.T) {
 		},
 	}
 
-	handleRequest(context.TODO(), sqsEvent, mockService)
+	HandleRequest(context.TODO(), sqsEvent, mockService)
 
 	mockService.AssertCalled(t, "UpdateHomeDevice", mock.Anything, hDRequest.UpdateDeviceRequest{HomeID: "home12345"}, "device123")
 }
