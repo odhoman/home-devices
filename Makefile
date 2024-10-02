@@ -27,7 +27,6 @@ test_and_build_all:
 	
 build_all:
 	@echo "Testing and Building all lambdas..."
-	@$(MAKE) test_all || { echo "Tests failed. Build aborted."; exit 1; }
 	@$(MAKE) build_single_lambda LAMBDA=createDevice
 	@$(MAKE) build_single_lambda LAMBDA=deleteDevice
 	@$(MAKE) build_single_lambda LAMBDA=updateDevice
