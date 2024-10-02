@@ -22,7 +22,18 @@ test_and_build_all:
 	@$(MAKE) build_single_lambda LAMBDA=updateDevice
 	@$(MAKE) build_single_lambda LAMBDA=getDevice
 	@$(MAKE) build_single_lambda LAMBDA=homeDeviceListener
+	@$(MAKE) build_single_lambda LAMBDA=kinesisListener
 	@echo "Testing and Building all lambdas: Completed."
+	
+build_all:
+	@echo "Testing and Building all lambdas..."
+	@$(MAKE) test_all || { echo "Tests failed. Build aborted."; exit 1; }
+	@$(MAKE) build_single_lambda LAMBDA=createDevice
+	@$(MAKE) build_single_lambda LAMBDA=deleteDevice
+	@$(MAKE) build_single_lambda LAMBDA=updateDevice
+	@$(MAKE) build_single_lambda LAMBDA=getDevice
+	@$(MAKE) build_single_lambda LAMBDA=kinesisListener
+	@echo "Testing and Building all lambdas: Completed."	
 
 test_and_build_createDevice:
 	@echo "Testing all and Building createDevice..."
